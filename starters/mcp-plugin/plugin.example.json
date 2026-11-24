@@ -1,0 +1,7 @@
+{
+  "name": "Project Status",
+  "description": "Look up project status in your own workspace.",
+  "endpoint": "http://localhost:4200/mcp",
+  "auth": "bearer",
+  "instructionsFile": "instructions.md"
+}

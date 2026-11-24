@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {encrypt,decrypt,publicAddress,validateEndpoint,redact} from '../backend/shared/infrastructure/security';
+test('credential encryption authenticates ciphertext',()=>{process.env.CREDENTIAL_KEY='12'.repeat(32);const a=encrypt('private-token'),b=encrypt('private-token');assert.notEqual(a,b);assert.equal(decrypt(a),'private-token');const bytes=Buffer.from(a,'base64');bytes[14]^=1;assert.throws(()=>decrypt(bytes.toString('base64')));});
+test('private, loopback, mapped and link local addresses rejected',()=>{for(const ip of ['127.0.0.1','10.1.2.3','169.254.169.254','192.168.1.1','::1','::ffff:127.0.0.1','fc00::1','100.64.0.1','0.0.0.0'])assert.equal(publicAddress(ip),false,ip);assert.equal(publicAddress('8.8.8.8'),true);});
+test('endpoint rules reject credentials and non-HTTPS; local exception is exact',async()=>{process.env.ALLOW_LOCAL_MCP='true';process.env.REFERENCE_MCP_URL='http://reference:4100/mcp';await validateEndpoint('http://reference:4100/mcp');await assert.rejects(validateEndpoint('http://reference:4100/other'));await assert.rejects(validateEndpoint('https://user:password@example.com'));await assert.rejects(validateEndpoint('https://127.0.0.1'));});
+test('redaction removes tokens and bounds output',()=>{assert.equal(redact('token in output',['token']),'[redacted] in output');assert.equal(redact('a'.repeat(70000),[]).length,64000);});

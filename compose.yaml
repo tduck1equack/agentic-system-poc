@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: plugin
+      POSTGRES_PASSWORD: plugin
+      POSTGRES_DB: pluginlab
+    ports: ["127.0.0.1:5438:5432"]
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plugin -d pluginlab"]
+      interval: 3s
+      retries: 20
+  reference:
+    build: .
+    command: ["npm", "run", "reference"]
+    ports: ["127.0.0.1:4100:4100"]
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://plugin:plugin@db:5432/pluginlab
+      REFERENCE_MCP_URL: http://reference:4100/mcp
+    ports: ["127.0.0.1:3000:3001"]
+    depends_on:
+      db:
+        condition: service_healthy
+      reference:
+        condition: service_started
+volumes:
+  database:

@@ -1,0 +1,78 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+model User {
+ id String @id @default(cuid())
+ email String @unique
+ password String
+ role String @default("user")
+}
+model Session {
+ id String @id
+ userId String
+ expires DateTime
+}
+model Plugin {
+ id String @id @default(cuid())
+ ownerId String
+ name String
+ description String
+ logo String @default("")
+ markdown String
+ endpoint String
+ auth String
+ published Boolean @default(false)
+ versions PluginVersion[]
+}
+model PluginVersion {
+ id String @id @default(cuid())
+ pluginId String
+ plugin Plugin @relation(fields: [pluginId], references: [id])
+ name String
+ description String
+ logo String
+ markdown String
+ endpoint String
+ auth String
+ tools Json
+ createdAt DateTime @default(now())
+ installations Installation[]
+}
+model Installation {
+ id String @id @default(cuid())
+ userId String
+ pluginId String
+ versionId String
+ version PluginVersion @relation(fields: [versionId], references: [id])
+ credential String
+ enabled Boolean @default(true)
+ status String @default("connected")
+ @@unique([userId, pluginId])
+}
+model Conversation {
+ id String @id @default(cuid())
+ userId String
+ createdAt DateTime @default(now())
+ messages Message[]
+ events ExecutionEvent[]
+}
+model Message {
+ id String @id @default(cuid())
+ conversationId String
+ conversation Conversation @relation(fields: [conversationId], references: [id])
+ role String
+ content String
+ createdAt DateTime @default(now())
+}
+model ExecutionEvent {
+ id String @id @default(cuid())
+ conversationId String
+ conversation Conversation @relation(fields: [conversationId], references: [id])
+ kind String
+ detail String
+ createdAt DateTime @default(now())
+}
